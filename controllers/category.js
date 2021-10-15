@@ -8,7 +8,7 @@ exports.getAllCategories = async (req, res, next) => {
       return res.status(200).send(result);
     })
     .catch((error) => {
-      return res.send(err);
+      return res.send(error);
     });
 };
 

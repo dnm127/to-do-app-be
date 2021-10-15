@@ -1,14 +1,25 @@
-const { get, isUndefined, isNull, omit } = require('lodash');
+const { get, isUndefined, isNull, omit, toNumber } = require('lodash');
 const ObjectId = require('mongodb').ObjectId;
 const { PRIORITY, STATE } = require('../constants/task');
 const Task = require('../models/task');
 const Category = require('../models/category');
 
 exports.getAllTasks = async (req, res, next) => {
-  return await Task.find()
+  const offset = get(req.query, 'offset', 0);
+  const limit = get(req.query, 'limit', 5);
+  const category = get(req.query, 'category', 'all');
+
+  const findQuery = {};
+  if (category !== 'all') {
+    findQuery.category = category;
+  }
+
+  return await Task.find(findQuery)
     // .select('title description priority state createdAt modifiedAt')
     // .populate('category')
     .sort({ createdAt: 'desc' })
+    .skip(toNumber(offset))
+    .limit(toNumber(limit))
     .then((result) => {
       return res.status(200).send({ success: true, data: result });
     })
@@ -87,7 +98,6 @@ exports.getOneTask = async (req, res, next) => {
 
 exports.deleteTasks = async (req, res, next) => {
   const ids = req.body.ids;
-  console.log('ids', req.params);
   return await Task.deleteMany(
     { _id: { $in: ids.map((id) => ObjectId(id)) } },
     (error, result) => {
